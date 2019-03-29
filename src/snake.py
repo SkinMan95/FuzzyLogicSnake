@@ -1,6 +1,9 @@
 import logging
 import random
 import copy
+import time
+import threading
+grid = None
 
 class Element(object):
 	def __init__(self, init_pos=None):
@@ -19,14 +22,14 @@ class MoveElement(Element):
 
 	def __init__(self, init_pos,direction):
 		super(MoveElement, self).__init__(init_pos)
-		self.direction = direction
-		self.lastDirection  = None
+		self.direction = random.choice(MoveElement.directions)
+		self.lastPosition  = None
 		
 	def move(self, dir):
-		lastDirection = copy.deepcopy(self.pos)
+		lastPosition = copy.deepcopy(self.pos)
 		npos = self.pos
 		for i in range(len(dir)):
-				npos[i] += dir[i]
+			npos[i] += dir[i]
 		self.pos = npos  
 	
 
@@ -40,6 +43,7 @@ class Obstacle(Element):
 
 
 class Snake(MoveElement):
+	global grid
 	def __init__(self, initpos):
 		# super(Snake, self).__init__(*args)) # stemen que inventa :v
 		super(Snake, self).__init__(initpos, random.choice(MoveElement.directions))
@@ -49,8 +53,8 @@ class Snake(MoveElement):
 		self.tail = TailElement(initPos=self.pos) if self.tail is None else TailElement(initPos=self.pos, tail=self.tail)
 		return self.tail
 
-	def move(self, dir):
-		super(Snake, self).move(dir)
+	def move(self):  	
+		# super(Snake, self).move(dir)
 		if self.tail != None:
 			self.tail.set
 
@@ -79,10 +83,10 @@ class TailElement(MoveElement):
 				
 
 def gen_random_pos(lim):
-	return (random.randint(2, lim-2), random.randint(2, lim-2))
+	return [random.randint(2, lim-2), random.randint(2, lim-2)]
 
 class Grid(object):
-
+  
 	def gen_random_grid(self, dimensions, snake, nobstacles, target=None):
 		elements = [Obstacle() for i in range(nobstacles)]
 
@@ -90,7 +94,7 @@ class Grid(object):
 			pos = gen_random_pos(dimensions)
 			while pos == snake.get_pos():
 				pos = gen_random_pos(dimensions)
-			target = Target(gen_random_pos(dimensions)) if target is None else target
+		target = Target(gen_random_pos(dimensions)) if target is None else target
 
 		grid = [[None for i in range(dimensions)] for j in range(dimensions-2)]
 
@@ -123,16 +127,18 @@ class Grid(object):
 		assert (nobstacles is None) or (nobstacles < dimensions**2)
 
 		self.dimensions = dimensions
-		self.nobstacles = random.randint(1, dimensions) if nobstacles is None else nobstacles
+		self.nobstacles = random.randint(1, dimensions//2) if nobstacles is None else nobstacles
 		self.snake = snake if snake is not None else Snake(gen_random_pos(self.dimensions))
 
 		self.grid = self.gen_random_grid(self.dimensions, self.snake, self.nobstacles) if initial_grid is None else initial_grid
 
 	def nextMove(self):
+		self.snake.move()
+		# cords = self.snake.get_head_pos()
+		# print(cords)
 		pass
 
 	def __str__(self):
-  		print(self.grid)
 		r = ""
 		for i in self.grid:
 			for j in i:
@@ -140,9 +146,17 @@ class Grid(object):
 			r += "\n"
 		return r			
 
-def main():
-	grid = Grid(10)
-	print(grid)
+def example(grid):
+	for i in range(10):
+		print(grid)
+		print(i)
+	grid.nextMove()
+	time.sleep(1)
 
+
+def main():
+	global grid
+	grid = Grid(10)
+	threading.Thread(target=example(grid)).start()
 if __name__ == "__main__":
 	main()

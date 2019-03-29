@@ -1,8 +1,8 @@
-R1: tar(curD) AND obstacle(curD) -> step(curD)
-R2: obstacle(curD) AND -obstacle(dlat(curD)[0]) {1 / elements(dlat(curD)[0])} -> choose(dlat(curD)[0])
-R3: obstacle(curD) AND -obstacle(dlat(curD)[1]) {1 / elements(dlat(curD)[1])} -> choose(dlat(curD)[1])
-R4: obstacle(curD) AND obstacle(dlat(curD)) -> choose(op(lastd())) ; step() ; choose(lastd())
-Rn: -tar(curD) AND obstacle(curD) -> step(curD)
+def R1: target(curD) and obstacle(curD) : step(curD)
+def R2: obstacle(curD) and -obstacle(dlat(curD)[0]) {1 / elements(dlat(curD)[0])} -> choose(dlat(curD)[0])
+def R3: obstacle(curD) and -obstacle(dlat(curD)[1]) {1 / elements(dlat(curD)[1])} -> choose(dlat(curD)[1])
+def R4: obstacle(curD) and obstacle(dlat(curD)) -> choose(op(lastd())) ; step() ; choose(lastd())
+def Rn: -target(curD) and obstacle(curD) -> step(curD)
 
 ######################################
 #        o                           #
