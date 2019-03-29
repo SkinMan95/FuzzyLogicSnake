@@ -13,7 +13,7 @@ def sum_pos(a, b):
 	for i in range(len(a)):
 		r[i] = a[i] + b[i]
 
-	print("{} + {} = {}".format(a, b, r))
+	# print("{} + {} = {}".format(a, b, r))
 	return r
 
 
@@ -72,8 +72,14 @@ class Snake(MoveElement):
 	def get_tail(self):
 		return self.tail
 
-	def get_head_pos(self):
-		return self.head_pos
+	def get_tail_as_list(self):
+		r = []
+		tail = self.tail
+		while tail is not None:
+			r.append(tail)
+			tail = tail.get_next()
+
+		return r
 
 	def __repr__(self):
 		return "*"
@@ -82,7 +88,7 @@ class Snake(MoveElement):
 class TailElement(MoveElement):
 	def __init__(self, init_pos=None, tail=None):
 		super(TailElement, self).__init__(init_pos)
-		self.tail = None
+		self.tail = tail
 
 	def __repr__(self):
 		return "."
@@ -149,7 +155,7 @@ class Grid(object):
 			else initial_grid
 
 	def can_move(self, pos, snake):
-		can = self.grid[pos[0]][pos[1]] is None
+		can = self.grid[pos[0]][pos[1]] is None or isinstance(self.grid[pos[0]][pos[1]], Target)
 
 		tail = snake.get_tail()
 		while can and tail is not None:
@@ -158,15 +164,30 @@ class Grid(object):
 
 		return can
 
-	def takeStep(self) -> bool:
+	def assign_random_target(self):
+		pos = gen_random_pos(self.dimensions)
+		while self.grid[pos[0]][pos[1]] is not None:
+			pos = gen_random_pos(self.dimensions)
+
+		new_target = Target(pos)
+		self.grid[pos[0]][pos[1]] = new_target
+		assert new_target.get_pos() == pos
+
+	def take_step(self) -> bool:
 		spos = self.snake.get_pos()
 		dirs = MoveElement.directions[:] # copy
 		random.shuffle(dirs)
 		moved = False
 		for d in dirs:
 			npos = sum_pos(spos, d)
-			if self.can_move(npos, self.snake):
+			if not moved and self.can_move(npos, self.snake):
 				self.snake.move(d)
+				npos = self.snake.get_pos()
+				if isinstance(self.grid[npos[0]][npos[1]], Target):
+					print("Found target!", npos)
+					self.grid[npos[0]][npos[1]] = None
+					self.assign_random_target()
+					self.snake.grow_tail()
 				moved = True
 
 		if not moved:
@@ -181,24 +202,31 @@ class Grid(object):
 		iterate = True
 		while iterate and (iterations is None or iterations > 0):
 			print(self)
-			iterate = self.takeStep()
+			iterate = self.take_step()
 
 			iterations = iterations-1 if iterations is not None else None
+			time.sleep(0.25)
 
 		print(self)
 
 	def __str__(self):
 		r = ""
 		# print("pos:", self.snake.get_pos())
+		tails = [tail.get_pos() for tail in self.snake.get_tail_as_list()]
+		print(tails)
 
 		grid = self.grid
 		for i in range(len(grid)):
 			for j in range(len(grid[i])):
 				# print((i, j))
+				r += " "
 				if [i, j] == self.snake.get_pos():
 					r += "*"
+				elif [i, j] in tails:
+					r += "+"
 				else:
 					r += str(grid[i][j]) if grid[i][j] is not None else " "
+				r += " "
 			r += "\n"
 		return r			
 
@@ -208,15 +236,13 @@ def example(grid):
 		# print(grid)
 		print(i)
 		grid.next_move()
-		time.sleep(1)
-
-
 
 
 def main():
 	global grid
 	grid = Grid(10)
-	example(grid)
+	grid.next_move()
+	# example(grid)
 
 
 if __name__ == "__main__":
